@@ -1,0 +1,24 @@
+{
+  "smtp": {
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "user": "your_email@gmail.com",
+    "password": "your_app_password",
+    "from": "your_email@gmail.com",
+    "use_tls": true,
+    "use_ssl": false
+  },
+  "search": {
+    "incident_search_months": 1,
+    "num_incidents": 2,
+    "search_language": "ko"
+  },
+  "email": {
+    "subject": "[산업재해 주의보] 최근 공장화재 사례 및 중대재해처벌법 안내",
+    "sender_name": "이헌영 지점장"
+  },
+  "output": {
+    "results_dir": "results",
+    "log_level": "INFO"
+  }
+}
