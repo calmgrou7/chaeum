@@ -1,0 +1,11 @@
+{
+  "name": "industrial-injury-fire-report-agent",
+  "version": "2.0.0",
+  "type": "agent",
+  "display_name": "산업재해·공장화재 보고서 자동 생성 에이전트",
+  "description": "CSV 고객 목록을 기반으로 최신 공장화재 뉴스를 검색하고 개인화된 HTML 보고서를 이메일로 자동 발송하는 에이전트",
+  "author": "이헌영",
+  "trigger_keywords": ["산업재해 보고서", "공장화재 안내", "단체보험 고객사", "화재안내 보내기", "중대재해처벌법", "CSV 파일로 보고서"],
+  "entry_point": "SKILL_AGENT.md",
+  "files": ["agent.py", "send_email.py", "sample_customers.csv", "sample_report.html"]
+}
