@@ -232,6 +232,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="API 키 없이 시스템 구조 시연 (데모 모드)",
     )
+    parser.add_argument(
+        "--yes", "-y",
+        action="store_true",
+        help="확인 프롬프트 생략 (자동 진행)",
+    )
     return parser.parse_args()
 
 
@@ -261,11 +266,14 @@ def main() -> None:
     print(f"  보고서 저장: {'안 함' if args.no_save else args.report_dir}")
     print("─" * 70)
 
-    if not args.quiet:
-        confirm = input("\n  위 설정으로 실행하시겠습니까? (Enter: 확인 / q: 취소): ").strip()
-        if confirm.lower() == "q":
-            print("\n취소되었습니다.")
-            return
+    if not args.quiet and not args.yes:
+        try:
+            confirm = input("\n  위 설정으로 실행하시겠습니까? (Enter: 확인 / q: 취소): ").strip()
+            if confirm.lower() == "q":
+                print("\n취소되었습니다.")
+                return
+        except EOFError:
+            pass  # 비대화형 환경에서는 자동 진행
 
     print(f"\n  ⏳ 에이전트 시스템 초기화 중...\n")
 
