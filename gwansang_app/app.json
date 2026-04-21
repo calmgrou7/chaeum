@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "관상사주",
+    "slug": "gwansang-saju",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a0a2e"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.chaeum.gwansangsaju",
+      "infoPlist": {
+        "NSCameraUsageDescription": "관상 분석을 위해 카메라가 필요합니다.",
+        "NSPhotoLibraryUsageDescription": "갤러리에서 사진을 선택하기 위해 필요합니다.",
+        "NSLocationWhenInUseUsageDescription": "주변 업체를 추천하기 위해 위치 정보가 필요합니다."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a0a2e"
+      },
+      "package": "com.chaeum.gwansangsaju",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-camera",
+      "expo-image-picker",
+      "expo-media-library",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "주변 시술 업체 추천을 위해 위치 정보를 사용합니다."
+        }
+      ]
+    ],
+    "scheme": "gwansangsaju",
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      },
+      "apiBaseUrl": "https://your-backend-url.com"
+    }
+  }
+}
