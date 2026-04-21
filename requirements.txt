@@ -1,4 +1,4 @@
-anthropic
+anthropic>=0.30.0
 requests
 beautifulsoup4
 pandas
