@@ -165,6 +165,29 @@ class BaseAgent:
 
             break
 
+        # Last-resort: if save_output was never called, extract assistant text and save it
+        if self._final_output is None:
+            for msg in reversed(history):
+                if msg.get("role") == "assistant":
+                    content = msg.get("content", [])
+                    text_parts = []
+                    for block in content:
+                        if hasattr(block, "text") and block.text:
+                            text_parts.append(block.text)
+                        elif isinstance(block, dict) and block.get("type") == "text":
+                            text_parts.append(block.get("text", ""))
+                    if text_parts:
+                        self._final_output = {
+                            "agent": self.AGENT_NAME.value,
+                            "status": "complete",
+                            "output": "\n".join(text_parts),
+                        }
+                        self.store.save_agent_output(
+                            self.state.project_id, self.AGENT_NAME.value, self._final_output
+                        )
+                        print(f"  [{self.AGENT_NAME.value}] 텍스트 결과 자동 저장됨")
+                    break
+
         result = self._final_output or {"status": "complete", "agent": self.AGENT_NAME.value}
         print(f"  [{self.AGENT_NAME.value}] 완료 (output={'저장됨' if self._final_output else '없음'})")
         return result
