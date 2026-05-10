@@ -35,10 +35,12 @@ class ProjectOrchestrator:
         bus: MessageBus,
         store: StateStore,
         api_key: str,
+        auto_approve: bool = False,
     ):
         self.state = state
         self.bus = bus
         self.store = store
+        self.auto_approve = auto_approve
         kwargs = dict(bus=bus, state=state, store=store, api_key=api_key)
         self.agents = {
             AgentName.RESEARCH: ResearchAgent(**kwargs),
@@ -174,14 +176,24 @@ class ProjectOrchestrator:
         print(sep)
 
     def _get_ceo_decision(self) -> tuple[str, str]:
+        if self.auto_approve:
+            print("\n  [자동 승인] --yes 옵션으로 자동 승인됩니다.")
+            return "approved", ""
         decision_map = {"y": "approved", "n": "rejected", "m": "modify"}
         while True:
-            choice = input("\n  결정 [y=승인 / n=거부 / m=수정요청]: ").strip().lower()
+            try:
+                choice = input("\n  결정 [y=승인 / n=거부 / m=수정요청]: ").strip().lower()
+            except EOFError:
+                print("\n  [자동 승인] 비대화형 환경 — 자동으로 승인합니다.")
+                return "approved", ""
             if choice in decision_map:
                 break
         notes = ""
         if choice in ("n", "m"):
-            notes = input("  피드백 메모 (Enter 건너뜀): ").strip()
+            try:
+                notes = input("  피드백 메모 (Enter 건너뜀): ").strip()
+            except EOFError:
+                pass
         return decision_map[choice], notes
 
     def _record_ceo_decision(self, msg: Message, decision: str, notes: str) -> None:
@@ -215,10 +227,19 @@ class ProjectOrchestrator:
         print("  [최종 CEO 결재] 프로젝트를 승인하시겠습니까?")
         print(sep)
 
-        while True:
-            choice = input("  결정 [y=승인 / n=거부]: ").strip().lower()
-            if choice in ("y", "n"):
-                break
+        if self.auto_approve:
+            print("  [자동 승인] --yes 옵션으로 최종 승인됩니다.")
+            choice = "y"
+        else:
+            while True:
+                try:
+                    choice = input("  결정 [y=승인 / n=거부]: ").strip().lower()
+                except EOFError:
+                    print("  [자동 승인] 비대화형 환경 — 자동으로 승인합니다.")
+                    choice = "y"
+                    break
+                if choice in ("y", "n"):
+                    break
 
         notes = ""
         if choice == "n":

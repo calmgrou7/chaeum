@@ -92,6 +92,7 @@ def parse_args() -> argparse.Namespace:
         help="Claude 모델 (기본: claude-sonnet-4-6)",
     )
     parser.add_argument("--api-key", help="Anthropic API 키 (기본: ANTHROPIC_API_KEY 환경변수)")
+    parser.add_argument("--yes", "-y", action="store_true", help="모든 CEO 승인을 자동으로 통과")
     return parser.parse_args()
 
 
@@ -155,7 +156,7 @@ def main() -> None:
     log_path = Path("results/projects") / state.project_id / "messages.jsonl"
     bus.set_log_path(log_path)
 
-    orchestrator = ProjectOrchestrator(state, bus, store, api_key)
+    orchestrator = ProjectOrchestrator(state, bus, store, api_key, auto_approve=args.yes)
     orchestrator.run_full_workflow(ceo_request)
 
     print(f"\n  모든 결과가 results/projects/{state.project_id}/ 에 저장되었습니다.")
