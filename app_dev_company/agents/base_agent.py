@@ -116,6 +116,7 @@ class BaseAgent:
         print(f"  └ {task_description[:80]}")
 
         self._final_output = None
+        system_prompt = self._build_system_prompt()
         history: list[dict] = [
             {"role": "user", "content": self._build_initial_message(task_description, context or {})}
         ]
@@ -124,7 +125,7 @@ class BaseAgent:
             response = self.client.messages.create(
                 model=self.MODEL,
                 max_tokens=4096,
-                system=self._build_system_prompt(),
+                system=system_prompt,
                 tools=self._all_tools(),
                 messages=history,
             )
@@ -132,6 +133,18 @@ class BaseAgent:
             history.append({"role": "assistant", "content": response.content})
 
             if response.stop_reason == "end_turn":
+                # If save_output was never called, try one more forced call
+                if self._final_output is None:
+                    history.append({
+                        "role": "user",
+                        "content": (
+                            "아직 save_output 도구를 호출하지 않았습니다. "
+                            "지금 바로 위에서 작성한 분석 결과 전체를 "
+                            "save_output 도구의 output 파라미터에 JSON 형태로 담아 호출하세요. "
+                            "반드시 save_output 도구 호출로만 응답하세요."
+                        ),
+                    })
+                    continue
                 break
 
             if response.stop_reason == "tool_use":
@@ -153,7 +166,7 @@ class BaseAgent:
             break
 
         result = self._final_output or {"status": "complete", "agent": self.AGENT_NAME.value}
-        print(f"  [{self.AGENT_NAME.value}] 완료")
+        print(f"  [{self.AGENT_NAME.value}] 완료 (output={'저장됨' if self._final_output else '없음'})")
         return result
 
     # ------------------------------------------------------------------
@@ -250,16 +263,26 @@ class BaseAgent:
             f"현재 프로젝트: {self.state.project_name}\n"
             f"현재 단계: {self.state.phase}\n\n"
             f"{self.SYSTEM_PROMPT}\n\n"
-            "## 공통 지침\n"
-            "- 작업이 완료되면 반드시 'save_output' 도구를 호출하여 결과를 저장하세요.\n"
-            "- 주요 예산·방향 결정 시 'request_ceo_approval' 도구를 사용하세요.\n"
-            "- 다른 팀의 결과가 필요하면 'read_agent_output' 도구를 사용하세요.\n"
-            "- 한국어로 답변하세요.\n"
+            "## 필수 규칙 (반드시 준수)\n"
+            "1. 작업을 마친 후 **반드시** 'save_output' 도구를 호출해야 합니다.\n"
+            "   save_output 없이 대화를 끝내면 작업 결과가 유실됩니다.\n"
+            "   save_output이 성공적으로 호출된 후에만 작업이 완료된 것입니다.\n"
+            "2. 주요 예산·방향 결정 시 'request_ceo_approval' 도구를 사용하세요.\n"
+            "3. 다른 팀의 결과가 필요하면 'read_agent_output' 도구를 사용하세요.\n"
+            "4. 모든 응답은 한국어로 작성하세요.\n\n"
+            "## save_output 호출 방법\n"
+            "분석과 계획을 모두 완료한 후, 마지막 행동으로 반드시 save_output을 호출하세요:\n"
+            "  save_output(output={결과 JSON})\n"
+            "텍스트 응답만 하고 save_output을 빠뜨리면 안 됩니다.\n"
         )
 
     def _build_initial_message(self, task: str, context: dict) -> str:
         parts = [f"## 작업 지시\n{task}"]
         if context:
             parts.append(f"\n## 추가 컨텍스트\n{json.dumps(context, ensure_ascii=False, indent=2)}")
-        parts.append("\n위 작업을 수행하고 결과를 save_output 도구로 저장하세요.")
+        parts.append(
+            "\n## 완료 기준\n"
+            "위 작업을 모두 수행한 뒤, **마지막 단계로 반드시 save_output 도구를 호출**하여 "
+            "결과 JSON을 저장하세요. save_output 호출 없이 작업을 종료하면 결과가 사라집니다."
+        )
         return "\n".join(parts)
