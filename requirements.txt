@@ -4,6 +4,7 @@ beautifulsoup4
 pandas
 jinja2
 python-dotenv
+flask
 
 # 이커머스 멀티 에이전트 시스템 추가 의존성
 # (기존 패키지로 커버됨 - 별도 설치 불필요)
