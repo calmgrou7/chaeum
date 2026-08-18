@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>채움 이커머스 에이전트</title>
+<style>
+  /* ── 전체 레이아웃 ── */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    background: #b2c7d9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .app-wrapper {
+    width: 100%;
+    max-width: 480px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #b2c7d9;
+    box-shadow: 0 0 40px rgba(0,0,0,0.3);
+  }
+
+  /* ── 상단 바 (카카오톡 채팅방 헤더) ── */
+  .chat-header {
+    background: #3c3c3c;
+    color: #fff;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .chat-header .back-btn { font-size: 20px; cursor: pointer; }
+  .chat-header .room-info { flex: 1; }
+  .chat-header .room-name { font-size: 15px; font-weight: 600; }
+  .chat-header .room-count { font-size: 12px; color: #aaa; margin-top: 1px; }
+  .chat-header .header-icons { display: flex; gap: 14px; font-size: 18px; }
+
+  /* ── 채팅 메시지 영역 ── */
+  .chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .chat-body::-webkit-scrollbar { width: 4px; }
+  .chat-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 2px; }
+
+  /* ── 날짜 구분선 ── */
+  .date-divider {
+    text-align: center;
+    margin: 12px 0 8px;
+    font-size: 12px;
+    color: #555;
+  }
+  .date-divider span {
+    background: rgba(0,0,0,0.15);
+    padding: 3px 12px;
+    border-radius: 20px;
+  }
+
+  /* ── Phase 배너 ── */
+  .phase-banner {
+    background: rgba(255,255,255,0.85);
+    border-radius: 12px;
+    padding: 8px 14px;
+    margin: 10px 0;
+    text-align: center;
+    font-size: 12px;
+    color: #444;
+    font-weight: 600;
+    border-left: 4px solid #fee500;
+  }
+  .phase-banner .phase-num { color: #888; font-weight: 400; margin-right: 4px; }
+
+  /* ── 도구 호출 알림 ── */
+  .tool-notice {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #666;
+    padding: 2px 10px;
+    margin: 2px 0;
+  }
+  .tool-notice .tool-icon { font-size: 13px; }
+
+  /* ── 에이전트 메시지 행 ── */
+  .msg-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 6px 0;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
+
+  /* 프로필 아이콘 */
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .avatar.ceo       { background: #fee500; }
+  .avatar.marketing { background: #ff6b9d; }
+  .avatar.md        { background: #00c471; }
+  .avatar.system    { background: #888; }
+
+  /* 메시지 본문 */
+  .msg-content { flex: 1; max-width: 85%; }
+  .msg-sender-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 3px;
+    padding-left: 2px;
+  }
+
+  .bubble-wrap { display: flex; align-items: flex-end; gap: 4px; }
+
+  .bubble {
+    background: #fff;
+    border-radius: 0 14px 14px 14px;
+    padding: 9px 13px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: #111;
+    word-break: break-word;
+    white-space: pre-wrap;
+    max-width: 100%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .bubble.ceo-bubble       { background: #fffde7; border-color: #fee500; }
+  .bubble.marketing-bubble { background: #fce4ec; }
+  .bubble.md-bubble        { background: #e8f5e9; }
+
+  .msg-time {
+    font-size: 10px;
+    color: #888;
+    white-space: nowrap;
+    align-self: flex-end;
+    margin-bottom: 2px;
+  }
+
+  /* 메시지 타입 배지 */
+  .msg-type-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    color: #fff;
+    border-radius: 8px;
+    padding: 1px 7px;
+    margin-bottom: 4px;
+  }
+  .badge-업무지시 { background: #3f51b5; }
+  .badge-기획제안 { background: #00897b; }
+  .badge-승인     { background: #43a047; }
+  .badge-보고     { background: #f57c00; }
+  .badge-최종결정 { background: #c62828; }
+  .badge-협의     { background: #6a1b9a; }
+  .badge-수정요청 { background: #e65100; }
+
+  /* 상태 메시지 */
+  .status-msg {
+    text-align: center;
+    font-size: 12px;
+    color: #555;
+    margin: 6px 0;
+    padding: 4px;
+  }
+
+  /* 완료 배너 */
+  .done-banner {
+    background: linear-gradient(135deg, #fee500 0%, #ffb800 100%);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: #333;
+    box-shadow: 0 2px 8px rgba(254,229,0,0.5);
+  }
+
+  /* 에러 배너 */
+  .error-banner {
+    background: #ffebee;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    font-size: 12px;
+    color: #c62828;
+    border-left: 4px solid #ef5350;
+  }
+
+  /* ── 하단 입력창 영역 ── */
+  .chat-footer {
+    background: #f1f1f1;
+    padding: 8px 10px;
+    flex-shrink: 0;
+    border-top: 1px solid #ddd;
+  }
+
+  /* 설정 패널 */
+  .settings-panel {
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 8px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .settings-panel.visible { display: flex; }
+
+  .settings-panel label { font-size: 12px; color: #666; font-weight: 600; }
+  .settings-panel input, .settings-panel textarea {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+    width: 100%;
+    outline: none;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .settings-panel input:focus, .settings-panel textarea:focus {
+    border-color: #fee500;
+    box-shadow: 0 0 0 2px rgba(254,229,0,0.3);
+  }
+
+  .settings-row { display: flex; gap: 8px; }
+  .settings-row > div { flex: 1; }
+
+  /* 시작 버튼 */
+  .start-btn {
+    background: #fee500;
+    border: none;
+    border-radius: 10px;
+    padding: 11px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .start-btn:hover { background: #ffd900; }
+  .start-btn:active { transform: scale(0.98); }
+  .start-btn:disabled { background: #ccc; color: #888; cursor: not-allowed; }
+
+  /* 하단 아이콘 바 */
+  .input-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .input-icon-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .input-icon-btn:hover { background: rgba(0,0,0,0.08); }
+
+  .input-fake {
+    flex: 1;
+    background: #fff;
+    border-radius: 20px;
+    padding: 9px 14px;
+    font-size: 13px;
+    color: #999;
+    cursor: pointer;
+    border: 1px solid #ddd;
+  }
+  .send-btn {
+    background: #fee500;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 로딩 점 애니메이션 */
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 8px 0;
+  }
+  .typing-dot {
+    width: 8px; height: 8px;
+    background: #888;
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-6px); }
+  }
+
+  /* 스크롤 하단 버튼 */
+  .scroll-btn {
+    position: sticky;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="app-wrapper">
+
+  <!-- 헤더 -->
+  <div class="chat-header">
+    <span class="back-btn">‹</span>
+    <div class="room-info">
+      <div class="room-name">채움 이커머스 에이전트 🛍️</div>
+      <div class="room-count">CEO · 마케팅팀장 · MD 3명</div>
+    </div>
+    <div class="header-icons">
+      <span title="설정" id="settingsToggle" style="cursor:pointer">⚙️</span>
+      <span>☰</span>
+    </div>
+  </div>
+
+  <!-- 채팅 메시지 영역 -->
+  <div class="chat-body" id="chatBody">
+    <div class="date-divider"><span id="todayDate"></span></div>
+    <div class="status-msg">👋 아래 설정에서 API 키와 주제를 입력하고 시작하세요.</div>
+  </div>
+
+  <!-- 하단 -->
+  <div class="chat-footer">
+
+    <!-- 설정 패널 -->
+    <div class="settings-panel" id="settingsPanel">
+      <div>
+        <label>🔑 Anthropic API 키</label>
+        <input type="password" id="apiKey" placeholder="sk-ant-api03-..." />
+      </div>
+      <div class="settings-row">
+        <div>
+          <label>📅 분기</label>
+          <input type="text" id="quarter" value="2025 Q3" />
+        </div>
+        <div>
+          <label>🎯 주제</label>
+          <input type="text" id="topic" value="신규 시즌 상품 기획" />
+        </div>
+      </div>
+      <div>
+        <label>📝 추가 컨텍스트 (선택)</label>
+        <textarea id="context" rows="2" placeholder="시장 상황, 전 분기 실적 등..."></textarea>
+      </div>
+      <button class="start-btn" id="startBtn" onclick="startWorkflow()">🚀 에이전트 시작!</button>
+    </div>
+
+    <!-- 입력창 바 -->
+    <div class="input-bar">
+      <button class="input-icon-btn" onclick="toggleSettings()" title="설정">➕</button>
+      <div class="input-fake" onclick="toggleSettings()">에이전트 설정 및 시작...</div>
+      <button class="send-btn" onclick="toggleSettings()">▶</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const chatBody = document.getElementById('chatBody');
+const startBtn = document.getElementById('startBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+let es = null; // EventSource
+let autoScroll = true;
+let typingEl = null;
+
+// 오늘 날짜 표시
+document.getElementById('todayDate').textContent =
+  new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+
+// .env에 저장된 API 키 자동 로드 시도
+window.addEventListener('load', () => {
+  fetch('/status').then(r => r.json()).then(d => {
+    if (d.api_key) document.getElementById('apiKey').value = d.api_key;
+  }).catch(() => {});
+});
+
+function toggleSettings() {
+  settingsPanel.classList.toggle('visible');
+}
+
+document.getElementById('settingsToggle').addEventListener('click', toggleSettings);
+
+function scrollBottom(force=false) {
+  if (autoScroll || force) {
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+}
+
+chatBody.addEventListener('scroll', () => {
+  const atBottom = chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight < 60;
+  autoScroll = atBottom;
+});
+
+function appendEl(el) {
+  chatBody.appendChild(el);
+  scrollBottom();
+}
+
+function addPhaseBanner(phase, name) {
+  const el = document.createElement('div');
+  el.className = 'phase-banner';
+  el.innerHTML = `<span class="phase-num">Phase ${phase}</span>${name}`;
+  appendEl(el);
+}
+
+function addStatusMsg(text) {
+  const el = document.createElement('div');
+  el.className = 'status-msg';
+  el.textContent = text;
+  appendEl(el);
+}
+
+function addToolNotice(icon, text) {
+  const el = document.createElement('div');
+  el.className = 'tool-notice';
+  el.innerHTML = `<span class="tool-icon">${icon}</span><span>${text}</span>`;
+  appendEl(el);
+}
+
+const BADGE_COLORS = {
+  '업무지시': 'badge-업무지시',
+  '기획제안': 'badge-기획제안',
+  '승인': 'badge-승인',
+  '보고': 'badge-보고',
+  '최종결정': 'badge-최종결정',
+  '협의': 'badge-협의',
+  '수정요청': 'badge-수정요청',
+};
+
+// 멀티 청크 메시지 버퍼
+const chunkBuffers = {};
+
+function addChatBubble(data) {
+  const key = `${data.sender}_${data.msg_type}_${data.time}`;
+
+  if (data.total_chunks > 1) {
+    if (!chunkBuffers[key]) {
+      chunkBuffers[key] = { parts: {}, meta: data };
+    }
+    chunkBuffers[key].parts[data.chunk_idx] = data.content;
+
+    if (Object.keys(chunkBuffers[key].parts).length === data.total_chunks) {
+      const fullContent = Array.from({ length: data.total_chunks }, (_, i) => chunkBuffers[key].parts[i]).join('');
+      delete chunkBuffers[key];
+      renderBubble({ ...data, content: fullContent });
+    }
+    return;
+  }
+
+  renderBubble(data);
+}
+
+function renderBubble(data) {
+  removeTyping();
+
+  const row = document.createElement('div');
+  row.className = 'msg-row';
+
+  const avatar = document.createElement('div');
+  avatar.className = `avatar ${data.color}`;
+  avatar.textContent = data.emoji;
+
+  const content = document.createElement('div');
+  content.className = 'msg-content';
+
+  const senderName = document.createElement('div');
+  senderName.className = 'msg-sender-name';
+  senderName.textContent = data.sender;
+  content.appendChild(senderName);
+
+  if (data.msg_type) {
+    const badge = document.createElement('span');
+    badge.className = `msg-type-badge ${BADGE_COLORS[data.msg_type] || ''}`;
+    badge.style.background = BADGE_COLORS[data.msg_type] ? '' : '#999';
+    badge.textContent = `→ ${data.recipient}  [${data.msg_type}]`;
+    content.appendChild(badge);
+    content.appendChild(document.createElement('br'));
+  }
+
+  const bubbleWrap = document.createElement('div');
+  bubbleWrap.className = 'bubble-wrap';
+
+  const bubble = document.createElement('div');
+  bubble.className = `bubble ${data.color}-bubble`;
+  bubble.textContent = data.content;
+
+  const timeEl = document.createElement('div');
+  timeEl.className = 'msg-time';
+  timeEl.textContent = data.time;
+
+  bubbleWrap.appendChild(bubble);
+  bubbleWrap.appendChild(timeEl);
+  content.appendChild(bubbleWrap);
+
+  row.appendChild(avatar);
+  row.appendChild(content);
+  appendEl(row);
+}
+
+function showTyping(agentName) {
+  removeTyping();
+  const el = document.createElement('div');
+  el.className = 'msg-row';
+  el.id = 'typingIndicator';
+  el.innerHTML = `
+    <div class="avatar system">🤖</div>
+    <div class="msg-content">
+      <div class="msg-sender-name">${agentName} 작성 중...</div>
+      <div class="bubble-wrap">
+        <div class="bubble">
+          <div class="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  appendEl(el);
+}
+
+function removeTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+function startWorkflow() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const quarter = document.getElementById('quarter').value.trim();
+  const topic = document.getElementById('topic').value.trim();
+  const context = document.getElementById('context').value.trim();
+
+  if (!apiKey) {
+    alert('API 키를 입력해주세요!');
+    return;
+  }
+
+  settingsPanel.classList.remove('visible');
+  startBtn.disabled = true;
+  startBtn.textContent = '⏳ 실행 중...';
+
+  if (es) es.close();
+
+  fetch('/start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key: apiKey, quarter, topic, context }),
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (!d.ok) {
+      alert(d.msg);
+      startBtn.disabled = false;
+      startBtn.textContent = '🚀 에이전트 시작!';
+      return;
+    }
+
+    es = new EventSource('/stream');
+
+    es.addEventListener('status', e => {
+      const d = JSON.parse(e.data);
+      addStatusMsg(d.text);
+    });
+
+    es.addEventListener('phase', e => {
+      const d = JSON.parse(e.data);
+      removeTyping();
+      addPhaseBanner(d.phase, d.name);
+    });
+
+    es.addEventListener('tool_start', e => {
+      const d = JSON.parse(e.data);
+      addToolNotice('🔧', `도구 호출: ${d.tool}  |  ${d.input}`);
+      showTyping('에이전트');
+    });
+
+    es.addEventListener('tool_end', e => {
+      const d = JSON.parse(e.data);
+      removeTyping();
+      addToolNotice('✅', `완료: ${d.tool}  →  ${d.preview}`);
+    });
+
+    es.addEventListener('message', e => {
+      const d = JSON.parse(e.data);
+      addChatBubble(d);
+    });
+
+    es.addEventListener('done', e => {
+      const d = JSON.parse(e.data);
+      removeTyping();
+      const el = document.createElement('div');
+      el.className = 'done-banner';
+      el.innerHTML = `🎉 모든 에이전트 협업 완료!<br><small>세션 ID: ${d.session_id}  |  총 메시지: ${d.msg_count}개</small>`;
+      appendEl(el);
+      es.close();
+      startBtn.disabled = false;
+      startBtn.textContent = '🔄 다시 시작';
+    });
+
+    es.addEventListener('error', e => {
+      try {
+        const d = JSON.parse(e.data);
+        removeTyping();
+        const el = document.createElement('div');
+        el.className = 'error-banner';
+        el.textContent = '❌ 오류: ' + d.text;
+        appendEl(el);
+      } catch (_) {}
+      es.close();
+      startBtn.disabled = false;
+      startBtn.textContent = '🚀 다시 시작';
+    });
+
+    es.onerror = () => {
+      if (es.readyState === EventSource.CLOSED) {
+        startBtn.disabled = false;
+        startBtn.textContent = '🚀 에이전트 시작!';
+      }
+    };
+  });
+}
+</script>
+</body>
+</html>
