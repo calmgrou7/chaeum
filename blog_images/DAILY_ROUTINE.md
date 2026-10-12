@@ -20,9 +20,15 @@
 - 고정 CTA는 v4 가이드의 연락처를 사용.
 
 ## 3. 이미지 4장 만들기
-1. `blog_images/output/<YYYY-MM-DD>/spec.json` 작성 (형식은 `blog_images/example.json`).
-   - title: kicker(인스타3초후킹 등), headline(썸네일문구), headline_html(강조 단어를 `<em>`), sub
-   - subs 3개: type은 `cards`(4개 카드) / `table`(첫 행 헤더) / `check` / `list` 중 원고 흐름에 맞게
+1. `blog_images/output/<YYYY-MM-DD>/spec.json` 작성. 기본 테마는 `bold`(파란 배경 유튜브 썸네일형, 보험지기 인물 컷).
+   형식은 `blog_images/output/2026-10-14/spec.json`을 그대로 따라 한다.
+   - title: badge("보험·세금 상식 블로그"), headline_html(`<em>` 노랑 강조, `<i>` 노랑 작은 글씨, `<br>`),
+     sub_html(흰 알약 문구, `<em>` 파랑 강조), presenter(`doc`/`point`/`three`, 기본 doc)
+   - subs 3개: label("주제 체크 1~3"), heading_html, type은
+     `cards`(3개 권장, 각 title_html·icon·desc) / `table`(첫 행 헤더) / `check`(짧은 항목 5개),
+     callout_html(아래 노랑 테두리 알약, 선택)
+   - icon 이름: doc, family, coins, receipt, calendar, shield, alert, people, calc, check
+   - `point` 컷은 휴대폰에 "1,000,000원 이체완료"가 보이므로 송금·생활비 주제에만 쓴다.
 2. `node blog_images/render.mjs blog_images/output/<날짜>/spec.json blog_images/output/<날짜>`
 3. PNG 4장을 Read로 열어 글자 넘침·잘림이 없는지 확인. 넘치면 문구를 줄여 다시 렌더링.
 

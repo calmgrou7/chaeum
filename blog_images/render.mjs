@@ -6,11 +6,13 @@
  *   node blog_images/render.mjs <spec.json> <출력폴더>
  *
  * spec.json 형식은 blog_images/example.json 참고.
+ * spec.theme: "bold"(기본, 유튜브 썸네일형) 또는 "classic"(네이비·크림 카드형)
  * 출력: title.png, sub1.png, sub2.png, sub3.png (각 1080x1080)
  */
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import * as bold from "./theme_bold.mjs";
 
 const require = createRequire(import.meta.url);
 
@@ -122,8 +124,13 @@ async function main() {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1080, height: 1080 } });
 
-  const jobs = [["title.png", titleHtml(spec.title)],
-    ...spec.subs.map((s, i) => [`sub${i + 1}.png`, subHtml(s, i + 1)])];
+  spec.brand = spec.brand || "지혜로운보험생활 보험지기";
+  const theme = spec.theme || "bold";
+  const jobs = theme === "classic"
+    ? [["title.png", titleHtml(spec.title)],
+       ...spec.subs.map((s, i) => [`sub${i + 1}.png`, subHtml(s, i + 1)])]
+    : [["title.png", bold.titleHtml(spec.title, spec)],
+       ...spec.subs.map((s, i) => [`sub${i + 1}.png`, bold.subHtml(s, i + 1, spec)])];
   for (const [name, html] of jobs) {
     await page.setContent(html, { waitUntil: "networkidle" });
     await page.evaluate(() => document.fonts.ready);
