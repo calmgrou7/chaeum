@@ -1,6 +1,0 @@
-anthropic
-requests
-beautifulsoup4
-pandas
-jinja2
-python-dotenv
